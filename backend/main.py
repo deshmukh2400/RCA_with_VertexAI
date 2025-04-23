@@ -1,13 +1,11 @@
 from flask import Flask, jsonify, render_template, request
 import json
-import os
-from backend.llm_summary import generate_summary
+from llm_summary import RCASummaryLLM
+from graph_builder import build_relationship_graph
+from trace_handler import trace_blueprint, correlate_traces_with_alerts
 
-app = Flask(
-    __name__,
-    template_folder="../frontend/templates",
-    static_folder="../frontend/static"
-)
+app = Flask(__name__, template_folder="templates", static_folder="static")
+app.register_blueprint(trace_blueprint)
 
 # Load default/mock data
 with open("backend/data/alerts.json") as f:
@@ -17,6 +15,8 @@ with open("backend/data/changes.json") as f:
 with open("backend/data/cmdb.json") as f:
     default_cmdb = json.load(f)
 
+llm_engine = RCASummaryLLM()
+
 def build_alert_timeline(alerts):
     return sorted(alerts, key=lambda x: x["timestamp"])
 
@@ -24,33 +24,38 @@ def build_alert_timeline(alerts):
 def index():
     return render_template("index.html")
 
-# GET uses default/mock data
-@app.route("/api/rca", methods=["GET"])
-def get_rca():
-    llm_output = generate_summary(default_alerts, default_changes, default_cmdb)
+@app.route("/api/rca", methods=["GET", "POST"])
+def api_rca():
+    if request.method == "POST":
+        data = request.get_json()
+        alerts = data.get("alerts", [])
+        changes = data.get("changes", [])
+        cmdb = data.get("cmdb", {})
+        traces = data.get("traces", [])
+    else:
+        alerts, changes, cmdb = default_alerts, default_changes, default_cmdb
+        traces = []
+
+    alerts = correlate_traces_with_alerts(alerts)
+    timeline = build_alert_timeline(alerts)
+
+    # Convert input to JSON strings for Gemini-friendly summary
+    summary = llm_engine.get_summary(
+        alerts=json.dumps(alerts),
+        changes=json.dumps(changes),
+        traces=json.dumps(traces),
+        cmdb=json.dumps(cmdb)
+    )
+
     return jsonify({
-        "root_cause": llm_output.strip(),
+        "root_cause": summary,
         "category": "AI-Powered Analysis",
-        "timeline": build_alert_timeline(default_alerts)
+        "timeline": timeline
     })
 
-# POST accepts dynamic input
-@app.route("/api/rca", methods=["POST"])
-def post_rca():
-    data = request.get_json()
-    alerts = data.get("alerts", [])
-    changes = data.get("changes", [])
-    cmdb = data.get("cmdb", {})
-    llm_output = generate_summary(alerts, changes, cmdb)
-    return jsonify({
-        "root_cause": llm_output.strip(),
-        "category": "AI-Powered Analysis",
-        "timeline": build_alert_timeline(alerts)
-    })
-
-@app.route("/api/cmdb", methods=["GET"])
-def get_cmdb():
+@app.route("/api/cmdb")
+def api_cmdb():
     return jsonify(default_cmdb)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
