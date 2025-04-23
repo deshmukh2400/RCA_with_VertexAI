@@ -1,0 +1,63 @@
+[
+  {
+    "trace_id": "trace-1001",
+    "span_id": "span-1",
+    "parent_span_id": null,
+    "timestamp": "2024-04-17T10:00:01Z",
+    "service": "web-frontend",
+    "operation": "GET /products",
+    "duration_ms": 80,
+    "status": "success"
+  },
+  {
+    "trace_id": "trace-1001",
+    "span_id": "span-2",
+    "parent_span_id": "span-1",
+    "timestamp": "2024-04-17T10:00:02Z",
+    "service": "product-service",
+    "operation": "listProducts",
+    "duration_ms": 110,
+    "status": "success"
+  },
+  {
+    "trace_id": "trace-1002",
+    "span_id": "span-1",
+    "parent_span_id": null,
+    "timestamp": "2024-04-17T10:00:05Z",
+    "service": "web-frontend",
+    "operation": "POST /order",
+    "duration_ms": 200,
+    "status": "success"
+  },
+  {
+    "trace_id": "trace-1002",
+    "span_id": "span-2",
+    "parent_span_id": "span-1",
+    "timestamp": "2024-04-17T10:00:06Z",
+    "service": "order-service",
+    "operation": "createOrder",
+    "duration_ms": 150,
+    "status": "success"
+  },
+  {
+    "trace_id": "trace-1002",
+    "span_id": "span-3",
+    "parent_span_id": "span-2",
+    "timestamp": "2024-04-17T10:00:06Z",
+    "service": "payment-service",
+    "operation": "chargeCard",
+    "duration_ms": 300,
+    "status": "error",
+    "error": "Payment gateway timeout"
+  },
+  {
+    "trace_id": "trace-1003",
+    "span_id": "span-1",
+    "parent_span_id": null,
+    "timestamp": "2024-04-17T10:00:08Z",
+    "service": "monitoring-agent",
+    "operation": "check DB",
+    "duration_ms": 50,
+    "status": "success"
+  }
+]
