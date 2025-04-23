@@ -5,6 +5,7 @@ from graph_builder import build_relationship_graph
 from trace_handler import trace_blueprint, correlate_traces_with_alerts
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+# Register the traces blueprint so /api/traces is available
 app.register_blueprint(trace_blueprint)
 
 # Load default/mock data
@@ -15,6 +16,7 @@ with open("backend/data/changes.json") as f:
 with open("backend/data/cmdb.json") as f:
     default_cmdb = json.load(f)
 
+# Instantiate the LLM engine (Gemini-based RCA)
 llm_engine = RCASummaryLLM()
 
 def build_alert_timeline(alerts):
@@ -26,20 +28,24 @@ def index():
 
 @app.route("/api/rca", methods=["GET", "POST"])
 def api_rca():
+    # Choose between default data (GET) or client-supplied (POST)
     if request.method == "POST":
-        data = request.get_json()
-        alerts = data.get("alerts", [])
+        data    = request.get_json()
+        alerts  = data.get("alerts", [])
         changes = data.get("changes", [])
-        cmdb = data.get("cmdb", {})
-        traces = data.get("traces", [])
+        cmdb    = data.get("cmdb", {})
+        traces  = data.get("traces", [])
     else:
         alerts, changes, cmdb = default_alerts, default_changes, default_cmdb
-        traces = []
+        traces = []  # no traces in GET
 
+    # First, correlate any ingested traces to your alert list
     alerts = correlate_traces_with_alerts(alerts)
+
+    # Sort for the timeline
     timeline = build_alert_timeline(alerts)
 
-    # Convert input to JSON strings for Gemini-friendly summary
+    # Call the LLM engine, passing JSON-encoded inputs
     summary = llm_engine.get_summary(
         alerts=json.dumps(alerts),
         changes=json.dumps(changes),
@@ -58,4 +64,5 @@ def api_cmdb():
     return jsonify(default_cmdb)
 
 if __name__ == "__main__":
+    # Listen on all interfaces (0.0.0.0) so your VM/Docker can expose it
     app.run(host="0.0.0.0", port=5000, debug=True)
