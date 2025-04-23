@@ -1,0 +1,5 @@
+[
+  { "ci": "db01",  "timestamp": "2025-04-16T08:25:00", "message": "Disk space full" },
+  { "ci": "app01","timestamp": "2025-04-16T08:30:00", "message": "App not responding" },
+  { "ci": "web01","timestamp": "2025-04-16T08:35:00", "message": "Web timeout" }
+]

@@ -1,0 +1,5 @@
+{
+  "web01": { "depends_on": ["app01"] },
+  "app01": { "depends_on": ["db01"] },
+  "db01":  { "depends_on": [] }
+}

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Root Cause Analysis Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <h1>RCA Dashboard with GenAI</h1>
+
+  <div class="container">
+    <!-- Dependency Tree -->
+    <div id="tree-container"></div>
+
+    <!-- RCA Summary Panel -->
+    <div id="rca-panel">
+      <h2>Root Cause Summary</h2>
+      <div id="rca-output">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+  async function loadCMDB() {
+    const res = await fetch('/api/cmdb');
+    return await res.json();
+  }
+
+  async function loadRCA() {
+    const res = await fetch('/api/rca');
+    return await res.json();
+  }
+
+  function renderTree(cmdb) {
+    const root = { name: 'web01', children: [] };
+    (function build(node, ci) {
+      const deps = cmdb[ci]?.depends_on || [];
+      node.name = ci;
+      node.children = deps.map(dep => {
+        const child = {};
+        build(child, dep);
+        return child;
+      });
+    })(root, 'web01');
+
+    const treeLayout = d3.tree().size([400, 200]);
+    const hierarchy = d3.hierarchy(root);
+    treeLayout(hierarchy);
+
+    const svg = d3.select("#tree-container")
+      .append("svg")
+      .attr("width", 500).attr("height", 250);
+
+    svg.selectAll('line')
+      .data(hierarchy.links())
+      .enter().append('line')
+      .attr('x1', d => d.source.x + 50)
+      .attr('y1', d => d.source.y + 20)
+      .attr('x2', d => d.target.x + 50)
+      .attr('y2', d => d.target.y + 20)
+      .attr('stroke', '#999');
+
+    svg.selectAll('circle')
+      .data(hierarchy.descendants())
+      .enter().append('circle')
+      .attr('cx', d => d.x + 50)
+      .attr('cy', d => d.y + 20)
+      .attr('r', 10)
+      .attr('fill', '#69b3a2');
+
+    svg.selectAll('text')
+      .data(hierarchy.descendants())
+      .enter().append('text')
+      .attr('x', d => d.x + 50)
+      .attr('y', d => d.y + 25)
+      .attr('text-anchor', 'middle')
+      .text(d => d.data.name);
+  }
+
+  async function init() {
+    const cmdb = await loadCMDB();
+    renderTree(cmdb);
+    const rca = await loadRCA();
+    document.getElementById("rca-output").innerText = rca.root_cause;
+  }
+
+  init();
+  </script>
+</body>
+</html>

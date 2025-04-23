@@ -1,0 +1,27 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+h1 {
+  text-align: center;
+  color: #0056b3;
+}
+.container {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  margin-top: 40px;
+}
+#tree-container {
+  width: 50%;
+}
+#rca-panel {
+  width: 40%;
+  background: #f4f4f4;
+  padding: 20px;
+  border-radius: 10px;
+}
+#rca-output {
+  font-size: 16px;
+  margin-top: 10px;
+}

@@ -1,0 +1,4 @@
+[
+  { "ci": "web01", "timestamp": "2025-04-16T07:00:00", "change": "Deployed new code" },
+  { "ci": "db01",  "timestamp": "2025-04-16T06:45:00", "change": "Patched OS" }
+]
