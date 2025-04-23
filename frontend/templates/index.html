@@ -2,89 +2,141 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Root Cause Analysis Dashboard</title>
+  <title>RCA Dashboard with GenAI</title>
   <link rel="stylesheet" href="/static/style.css">
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
   <h1>RCA Dashboard with GenAI</h1>
 
+  <!-- Dependency Tree & RCA Summary -->
   <div class="container">
-    <!-- Dependency Tree -->
     <div id="tree-container"></div>
-
-    <!-- RCA Summary Panel -->
-    <div id="rca-panel">
+    <div class="rca-box">
       <h2>Root Cause Summary</h2>
       <div id="rca-output">Loading...</div>
     </div>
   </div>
 
+  <!-- Alerts Timeline & Trace Flow -->
+  <div class="container">
+    <!-- Alerts -->
+    <div class="section">
+      <h2>Alert Timeline</h2>
+      <ul id="alert-list" class="timeline">Loading...</ul>
+    </div>
+
+    <!-- Traces -->
+    <div class="section">
+      <h2>Trace Flow</h2>
+      <button onclick="loadTraces()">Load Trace Data</button>
+      <div id="traceGraph"></div>
+      <div id="traceTimeline"></div>
+    </div>
+  </div>
+
+  <!-- Embedded Scripts -->
   <script>
-  async function loadCMDB() {
-    const res = await fetch('/api/cmdb');
-    return await res.json();
-  }
+    // Fetch CMDB and render dependency tree
+    async function loadCMDB() {
+      const res = await fetch('/api/cmdb');
+      return await res.json();
+    }
 
-  async function loadRCA() {
-    const res = await fetch('/api/rca');
-    return await res.json();
-  }
+    function renderTree(cmdb) {
+      // Build a simple tree starting from 'web01'
+      const root = { name: 'web01', children: [] };
+      (function build(node, id) {
+        const deps = cmdb[id]?.depends_on || [];
+        node.name = id;
+        node.children = deps.map(childId => {
+          const childNode = {};
+          build(childNode, childId);
+          return childNode;
+        });
+      })(root, 'web01');
 
-  function renderTree(cmdb) {
-    const root = { name: 'web01', children: [] };
-    (function build(node, ci) {
-      const deps = cmdb[ci]?.depends_on || [];
-      node.name = ci;
-      node.children = deps.map(dep => {
-        const child = {};
-        build(child, dep);
-        return child;
+      const width = 500, height = 250;
+      const treeLayout = d3.tree().size([height, width - 100]);
+      const hierarchy = d3.hierarchy(root);
+      treeLayout(hierarchy);
+
+      const svg = d3.select("#tree-container").html("")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height + 20)
+        .append("g")
+        .attr("transform", "translate(50,10)");
+
+      // Links
+      svg.selectAll('line')
+        .data(hierarchy.links())
+        .enter().append('line')
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x)
+        .attr('y2', d => d.target.y)
+        .attr('stroke', '#999');
+
+      // Nodes
+      svg.selectAll('circle')
+        .data(hierarchy.descendants())
+        .enter().append('circle')
+        .attr('cx', d => d.x)
+        .attr('cy', d => d.y)
+        .attr('r', 6)
+        .attr('fill', '#69b3a2');
+
+      // Labels
+      svg.selectAll('text')
+        .data(hierarchy.descendants())
+        .enter().append('text')
+        .attr('x', d => d.x)
+        .attr('y', d => d.y + 15)
+        .attr('text-anchor', 'middle')
+        .text(d => d.data.name);
+    }
+
+    // Fetch RCA summary and alerts timeline
+    async function loadRCA() {
+      const res = await fetch('/api/rca');
+      return await res.json();
+    }
+
+    function renderAlerts(timeline) {
+      const list = document.getElementById("alert-list");
+      list.innerHTML = '';
+      timeline.forEach(alert => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="timestamp">${alert.timestamp}</span>
+                        <strong>${alert.ci}</strong>: ${alert.message}`;
+        list.appendChild(li);
       });
-    })(root, 'web01');
+    }
 
-    const treeLayout = d3.tree().size([400, 200]);
-    const hierarchy = d3.hierarchy(root);
-    treeLayout(hierarchy);
+    // Load ingest traces & visualization
+    async function loadTraces() {
+      const res = await fetch('/api/traces');
+      const data = await res.json();
+      renderTraceGraph(data);
+      renderTraceTimeline(data);
+    }
+  </script>
 
-    const svg = d3.select("#tree-container")
-      .append("svg")
-      .attr("width", 500).attr("height", 250);
+  <!-- External Trace Visualizer -->
+  <script src="/static/js/trace-visualizer.js"></script>
 
-    svg.selectAll('line')
-      .data(hierarchy.links())
-      .enter().append('line')
-      .attr('x1', d => d.source.x + 50)
-      .attr('y1', d => d.source.y + 20)
-      .attr('x2', d => d.target.x + 50)
-      .attr('y2', d => d.target.y + 20)
-      .attr('stroke', '#999');
+  <script>
+    // Initialize everything
+    async function init() {
+      const cmdb     = await loadCMDB();
+      const rcaData  = await loadRCA();
 
-    svg.selectAll('circle')
-      .data(hierarchy.descendants())
-      .enter().append('circle')
-      .attr('cx', d => d.x + 50)
-      .attr('cy', d => d.y + 20)
-      .attr('r', 10)
-      .attr('fill', '#69b3a2');
-
-    svg.selectAll('text')
-      .data(hierarchy.descendants())
-      .enter().append('text')
-      .attr('x', d => d.x + 50)
-      .attr('y', d => d.y + 25)
-      .attr('text-anchor', 'middle')
-      .text(d => d.data.name);
-  }
-
-  async function init() {
-    const cmdb = await loadCMDB();
-    renderTree(cmdb);
-    const rca = await loadRCA();
-    document.getElementById("rca-output").innerText = rca.root_cause;
-  }
-
-  init();
+      renderTree(cmdb);
+      document.getElementById("rca-output").innerText = rcaData.root_cause;
+      renderAlerts(rcaData.timeline);
+    }
+    init();
   </script>
 </body>
 </html>
