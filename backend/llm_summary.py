@@ -1,49 +1,52 @@
-import os
-import openai
+import vertexai
+from vertexai.generative_models import GenerativeModel, Part
+import json
 
-# Azure OpenAI settings
-openai.api_type    = "azure"
-openai.api_base    = os.getenv("AZURE_OPENAI_ENDPOINT")
-openai.api_version = "2023-05-15"
-openai.api_key     = os.getenv("AZURE_OPENAI_KEY")
+vertexai.init(project="your-gcp-project-id", location="us-central1")
 
-DEPLOYMENT_NAME = os.getenv("AZURE_DEPLOYMENT_NAME", "gpt-35-turbo")
+class RCASummaryLLM:
+    def __init__(self, model_name="gemini-1.0-pro"):
+        self.model = GenerativeModel(model_name)
 
-def format_alerts(alerts):
-    return "\n".join(
-        f"- [{a['timestamp']}] {a['ci']} - {a.get('type','alert')} - {a['message']}"
-        for a in alerts
-    )
+    def deduplicate_lines(self, title, data):
+        if not data:
+            return f"No {title.lower()} available."
+        
+        try:
+            parsed = json.loads(data)
+            if isinstance(parsed, list):
+                unique_items = {json.dumps(item, sort_keys=True) for item in parsed}
+                lines = [json.loads(item) for item in unique_items]
+                summary = f"### {title}:\n" + json.dumps(lines, indent=2)
+            else:
+                summary = f"### {title}:\n" + json.dumps(parsed, indent=2)
+        except Exception:
+            # Fallback if data isn't valid JSON
+            unique_lines = list(dict.fromkeys(data.strip().splitlines()))
+            summary = f"### {title}:\n" + "\n".join(unique_lines)
+        return summary
 
-def format_changes(changes):
-    return "\n".join(
-        f"- [{c['timestamp']}] {c['ci']} - {c.get('change', c.get('description',''))}"
-        for c in changes
-    )
+    def build_prompt(self, alerts, changes, traces, cmdb):
+        return f"""
+You are an expert Site Reliability Engineer working in a large banking environment. You are responsible for analyzing system-wide issues across services like Core Banking, Payments, Internet Banking, and Middleware.
 
-def format_cmdb(cmdb):
-    lines = []
-    for ci, props in cmdb.items():
-        for dep in props.get("depends_on", []):
-            lines.append(f"{ci} --> {dep}")
-    return "\n".join(lines)
+Your inputs are:
+- **Alerts** from monitoring systems
+- **Change records** (completed or in-progress)
+- **Traces** showing runtime behavior of services
+- **CMDB data** defining dependencies between components
 
-def generate_summary(alerts, changes, cmdb):
-    alert_text  = format_alerts(alerts)
-    change_text = format_changes(changes)
-    cmdb_text   = format_cmdb(cmdb)
+Based on the following data, identify:
+1. If this is a **service degradation or outage**
+2. The **most probable root cause** (infra, change, application, config, etc.)
+3. Affected **business services**
+4. A **step-by-step explanation**
+5. **Missing or inconclusive signals**, if applicable
 
-    prompt = f"""
-You are an expert SRE AI assistant helping diagnose IT infrastructure issues.
-
-1. Timeline of Alerts:
-{alert_text}
-
-2. Recent Changes:
-{change_text}
-
-3. CI Dependency Graph (top-down):
-{cmdb_text}
+{self.deduplicate_lines("Alerts", alerts)}
+{self.deduplicate_lines("Changes", changes)}
+{self.deduplicate_lines("Traces", traces)}
+{self.deduplicate_lines("CMDB Relationships", cmdb)}
 
 Please analyze and answer:
 - What is the most probable root cause of the issue?
@@ -54,10 +57,17 @@ Please analyze and answer:
 Respond concisely and professionally.
 """
 
-    response = openai.ChatCompletion.create(
-        engine=DEPLOYMENT_NAME,
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=500,
-        temperature=0.3
-    )
-    return response.choices[0].message["content"]
+    def get_summary(self, alerts, changes, traces, cmdb):
+        prompt = self.build_prompt(alerts, changes, traces, cmdb)
+
+        response = self.model.generate_content(
+            Part.from_text(prompt),
+            generation_config={
+                "temperature": 0.3,
+                "max_output_tokens": 1024,
+                "top_k": 40,
+                "top_p": 0.9
+            }
+        )
+
+        return response.text.strip()
