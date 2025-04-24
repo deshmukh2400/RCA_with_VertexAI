@@ -1,22 +1,23 @@
 {
-  "web01": {
-    "type": "Web Server",
-    "depends_on": ["app01", "app02"]
-  },
-  "app01": {
-    "type": "App Server",
-    "depends_on": ["vm01"]
-  },
-  "app02": {
-    "type": "App Server",
-    "depends_on": ["vm01"]
-  },
-  "vm01": {
-    "type": "Virtual Machine",
-    "depends_on": ["db01"]
-  },
-  "db01": {
-    "type": "Database Server",
-    "depends_on": []
-  }
+  "web01":    { "depends_on": ["api01", "auth01"] },
+  "web02":    { "depends_on": ["api02"] },
+  "auth01":   { "depends_on": ["db02", "cache01"] },
+  "api01":    { "depends_on": ["svc01", "svc02"] },
+  "api02":    { "depends_on": ["svc02", "search01"] },
+  "svc01":    { "depends_on": ["db01", "mq01"] },
+  "svc02":    { "depends_on": ["analytics01"] },
+  "db01":     { "depends_on": ["vm01"] },
+  "db02":     { "depends_on": ["vm02"] },
+  "cache01":  { "depends_on": ["vm03"] },
+  "mq01":     { "depends_on": ["vm04"] },
+  "vm01":     { "depends_on": [] },
+  "vm02":     { "depends_on": [] },
+  "vm03":     { "depends_on": [] },
+  "vm04":     { "depends_on": [] },
+  "search01": { "depends_on": ["indexer01", "vm05"] },
+  "indexer01":{ "depends_on": ["vm05"] },
+  "analytics01": { "depends_on": ["db03", "vm06"] },
+  "db03":     { "depends_on": ["vm06"] },
+  "monitor01":{ "depends_on": [] },
+  "alert01":  { "depends_on": ["monitor01"] }
 }
