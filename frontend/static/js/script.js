@@ -3,13 +3,21 @@
 // 1) Load CMDB and render the D3 tree
 async function loadCMDB() {
   try {
-    const res = await fetch('/api/cmdb');
-    if (!res.ok) throw new Error(res.statusText);
+    const url = `${window.location.origin}/api/cmdb`;
+    console.log('Fetching CMDB from', url);
+    const res = await fetch(url);
+    console.log('CMDB HTTP status:', res.status, res.statusText);
+    if (!res.ok) throw new Error(`HTTP ${res.status} – ${res.statusText}`);
     const cmdb = await res.json();
     renderTree(cmdb);
   } catch (err) {
     console.error("CMDB load failed:", err);
-    document.getElementById('tree-container').innerText = "Error loading CMDB";
+    const container = document.getElementById('tree-container');
+    container.innerHTML = `
+      <div class="error-message">
+        <strong>Error loading CMDB:</strong> ${err.message}
+      </div>
+    `;
   }
 }
 
