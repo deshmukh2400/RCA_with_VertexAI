@@ -21,6 +21,7 @@ function renderAlerts(timeline) {
   });
 }
 
+
 // Draw the dependency tree, coloring impacted CIs red
 function renderTree(cmdb, impactedSet) {
   // Build hierarchical data (starting from 'web01' or adjust as needed)
