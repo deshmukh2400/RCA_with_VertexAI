@@ -128,3 +128,25 @@ main {
   width: 100%;
   height: 300px;
 }
+/* Legend */
+.legend {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.legend-color {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  border-radius: 3px;
+  border: 1px solid #333;
+}
+.legend-color.impacted { background-color: #e74c3c; }
+.legend-color.healthy  { background-color: #69b3a2; }
