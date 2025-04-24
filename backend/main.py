@@ -1,3 +1,4 @@
+import traceback
 from flask import Flask, jsonify, render_template, request
 import json
 from llm_summary import RCASummaryLLM
@@ -27,40 +28,43 @@ def index():
     return render_template("index.html")
 
 @app.route("/api/rca", methods=["GET", "POST"])
-def handle_traces():
-    if request.method == 'GET':
-        return jsonify(trace_store), 200
 def api_rca():
-    # Choose between default data (GET) or client-supplied (POST)
-    if request.method == "POST":
-        data    = request.get_json()
-        alerts  = data.get("alerts", [])
-        changes = data.get("changes", [])
-        cmdb    = data.get("cmdb", {})
-        traces  = data.get("traces", [])
-    else:
-        alerts, changes, cmdb = default_alerts, default_changes, default_cmdb
-        traces = []  # no traces in GET
+    try:
+        if request.method == "POST":
+            data    = request.get_json()
+            alerts  = data.get("alerts", [])
+            changes = data.get("changes", [])
+            cmdb    = data.get("cmdb", {})
+            traces  = data.get("traces", [])
+        else:
+            alerts, changes, cmdb = default_alerts, default_changes, default_cmdb
+            traces = []
 
-    # First, correlate any ingested traces to your alert list
-    alerts = correlate_traces_with_alerts(alerts)
+        # correlate and timeline
+        alerts = correlate_traces_with_alerts(alerts)
+        timeline = build_alert_timeline(alerts)
 
-    # Sort for the timeline
-    timeline = build_alert_timeline(alerts)
+        # get summary
+        summary = llm_engine.get_summary(
+            alerts=json.dumps(alerts),
+            changes=json.dumps(changes),
+            traces=json.dumps(traces),
+            cmdb=json.dumps(cmdb)
+        )
 
-    # Call the LLM engine, passing JSON-encoded inputs
-    summary = llm_engine.get_summary(
-        alerts=json.dumps(alerts),
-        changes=json.dumps(changes),
-        traces=json.dumps(traces),
-        cmdb=json.dumps(cmdb)
-    )
-
-    return jsonify({
-        "root_cause": summary,
-        "category": "AI-Powered Analysis",
-        "timeline": timeline
-    })
+        return jsonify({
+            "root_cause": summary,
+            "category": "AI-Powered Analysis",
+            "timeline": timeline
+        })
+    except Exception as e:
+        # Print full traceback to server logs
+        traceback.print_exc()
+        # Return error message to browser for quick debugging
+        return jsonify({
+            "error": str(e),
+            "trace": traceback.format_exc().splitlines()[-3:]  # last few lines
+        }), 500
 
 @app.route("/api/cmdb")
 def api_cmdb():
