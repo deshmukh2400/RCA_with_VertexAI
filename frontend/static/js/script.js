@@ -139,3 +139,28 @@ window.addEventListener("DOMContentLoaded", () => {
   loadRCA();
   // traces are handled by trace-visualizer.js on its own
 });
+
+// Tooltip element
+const tooltip = d3.select("body")
+  .append("div")
+  .attr("class", "tooltip")
+  .style("position", "absolute")
+  .style("padding", "6px 10px")
+  .style("background", "rgba(0,0,0,0.7)")
+  .style("color", "#fff")
+  .style("border-radius", "4px")
+  .style("pointer-events", "none")
+  .style("opacity", 0);
+
+function showTooltip(x, y, text) {
+  tooltip
+    .style("left", `${x + 10}px`)
+    .style("top",  `${y + 10}px`)
+    .html(`<strong>${text}</strong>`)
+    .transition().duration(100)
+    .style("opacity", 1);
+}
+
+function hideTooltip() {
+  tooltip.transition().duration(100).style("opacity", 0);
+}
