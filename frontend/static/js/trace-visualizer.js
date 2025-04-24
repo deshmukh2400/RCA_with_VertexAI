@@ -63,6 +63,16 @@ function renderTraceGraph(traces) {
     .append("svg")
     .attr("width", width)
     .attr("height", height);
+    
+  const svgBase = d3.select(".trace-graph").html("")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .call(d3.zoom().on("zoom", (event) => {
+      svg.attr("transform", event.transform);
+    }));
+
+  const svg = svgBase.append("g");
 
   const simulation = d3.forceSimulation(Object.values(nodes))
     .force("link", d3.forceLink(links).id(d => d.id).distance(100))
@@ -131,6 +141,23 @@ function renderTraceGraph(traces) {
       .attr('x', d => d.x)
       .attr('y', d => d.y);
   });
+  // Auto-center and scale the trace graph
+  const bbox = svg.node().getBBox();
+  const svgBase = d3.select(".trace-graph svg"); // outer SVG element
+  const fullWidth = +svgBase.attr("width");
+  const fullHeight = +svgBase.attr("height");
+  
+  const scale = Math.min(
+    fullWidth / (bbox.width + 100),
+    fullHeight / (bbox.height + 100)
+  );
+  
+  const translateX = (fullWidth - bbox.width * scale) / 2 - bbox.x * scale;
+  const translateY = (fullHeight - bbox.height * scale) / 2 - bbox.y * scale;
+  
+  svg.transition()
+    .duration(500)
+    .attr("transform", `translate(${translateX}, ${translateY}) scale(${scale})`);
 }
 
 function renderTraceTimeline(traces) {
