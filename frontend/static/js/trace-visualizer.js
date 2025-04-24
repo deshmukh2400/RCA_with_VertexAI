@@ -58,11 +58,6 @@ function renderTraceGraph(traces) {
 
   const width = document.querySelector('.trace-graph').clientWidth;
   const height = document.querySelector('.trace-graph').clientHeight;
-
-  const svg = d3.select(".trace-graph").html("")
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height);
     
   const svgBase = d3.select(".trace-graph").html("")
     .append("svg")
