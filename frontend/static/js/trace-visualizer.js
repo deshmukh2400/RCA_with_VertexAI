@@ -1,23 +1,47 @@
 async function loadTraces() {
-  const res = await fetch('/api/traces');
-  if (!res.ok) {
-    console.error('Failed to load traces', res.statusText);
-    return;
+  console.log("▶️ loadTraces() called");
+  try {
+    const res = await fetch('/api/traces');
+    console.log("fetch /api/traces →", res.status, res.statusText);
+    if (!res.ok) throw new Error(`HTTP ${res.status} – ${res.statusText}`);
+    const data = await res.json();
+    console.log("trace data:", data);
+
+    // Handle empty data
+    if (!data || data.length === 0) {
+      d3.select(".trace-graph")
+        .html("<div class='error-message'>No trace spans to display.</div>");
+      document.getElementById("traceTimeline")
+        .innerText = "No trace data available.";
+      return;
+    }
+
+    renderTraceGraph(data);
+    renderTraceTimeline(data);
+
+  } catch (err) {
+    console.error("Trace load failed:", err);
+    d3.select(".trace-graph")
+      .html(`<div class="error-message">Error loading trace graph: ${err.message}</div>`);
+    document.getElementById("traceTimeline")
+      .innerText = `Error loading traces: ${err.message}`;
   }
-  console.log("▶️ loadTraces()");
-  const res = await fetch('/api/traces');
-  console.log("fetch /api/traces status:", res.status);
-  if (!res.ok) {
-    console.error('Failed to load traces', res.statusText);
-    return;
-  }
-  const data = await res.json();
-  console.log("traces payload:", data);
-  // … renderTraceGraph & renderTraceTimeline …
-  
-  renderTraceGraph(data);
-  renderTraceTimeline(data);
 }
+
+// Attach events after DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("refresh-traces");
+  if (btn) {
+    btn.addEventListener("click", loadTraces);
+  } else {
+    console.warn("Refresh-traces button not found in DOM");
+  }
+
+  // Also call it once after everything else has rendered
+  loadTraces();
+});
+
+
 
 function renderTraceGraph(traces) {
   const nodes = {}, links = [];
