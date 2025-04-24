@@ -35,7 +35,9 @@ function renderTree(cmdb, impactedSet) {
     });
   })(root, 'web01');
 
-  const width = 500, height = 300;
+  const nodeCount = hierarchy.descendants().length;
+  const width = Math.max(600, nodeCount * 30);
+  const height = Math.max(400, nodeCount * 20);
   const treeLayout = d3.tree().size([height, width - 100]);
   const hierarchy = d3.hierarchy(root);
   treeLayout(hierarchy);
@@ -53,9 +55,7 @@ function renderTree(cmdb, impactedSet) {
   const svg = svgBase.append("g")
     .attr("transform", "translate(50,50)");
     
-  const nodeCount = hierarchy.descendants().length;
-  const width = Math.max(600, nodeCount * 30);
-  const height = Math.max(400, nodeCount * 20);
+  
   
   // Links
   svg.selectAll("line")
