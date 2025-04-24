@@ -1,32 +1,9 @@
 [
-  {
-    "ci": "vm01",
-    "timestamp": "2025-04-20T09:15:00Z",
-    "message": "CPU usage at 98%",
-    "severity": "critical"
-  },
-  {
-    "ci": "app01",
-    "timestamp": "2025-04-20T09:17:00Z",
-    "message": "Application response time > 5s",
-    "severity": "warning"
-  },
-  {
-    "ci": "app02",
-    "timestamp": "2025-04-20T09:18:30Z",
-    "message": "Application crashed with exit code 1",
-    "severity": "critical"
-  },
-  {
-    "ci": "web01",
-    "timestamp": "2025-04-20T09:19:00Z",
-    "message": "HTTP 502 Bad Gateway",
-    "severity": "error"
-  },
-  {
-    "ci": "db01",
-    "timestamp": "2025-04-20T09:10:00Z",
-    "message": "Disk latency high",
-    "severity": "warning"
-  }
+  { "ci": "web01", "message": "Latency spike", "timestamp": "2025-04-24T09:00:10Z" },
+  { "ci": "api01", "message": "High 5xx rate", "timestamp": "2025-04-24T09:00:05Z" },
+  { "ci": "svc01", "message": "Service degraded", "timestamp": "2025-04-24T08:59:50Z" },
+  { "ci": "mq01", "message": "Message backlog growing", "timestamp": "2025-04-24T08:59:40Z" },
+  { "ci": "vm04", "message": "Disk full", "timestamp": "2025-04-24T08:59:30Z" },
+  { "ci": "analytics01", "message": "Job failures", "timestamp": "2025-04-24T08:59:20Z" },
+  { "ci": "vm06", "message": "Out of memory", "timestamp": "2025-04-24T08:59:10Z" }
 ]
