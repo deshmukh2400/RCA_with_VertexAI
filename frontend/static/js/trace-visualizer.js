@@ -4,7 +4,17 @@ async function loadTraces() {
     console.error('Failed to load traces', res.statusText);
     return;
   }
+  console.log("▶️ loadTraces()");
+  const res = await fetch('/api/traces');
+  console.log("fetch /api/traces status:", res.status);
+  if (!res.ok) {
+    console.error('Failed to load traces', res.statusText);
+    return;
+  }
   const data = await res.json();
+  console.log("traces payload:", data);
+  // … renderTraceGraph & renderTraceTimeline …
+  
   renderTraceGraph(data);
   renderTraceTimeline(data);
 }
