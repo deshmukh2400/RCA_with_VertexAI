@@ -1,45 +1,52 @@
+# backend/trace_handler.py
+
 from flask import Blueprint, request, jsonify
 import datetime
 
+# Define the blueprint
 trace_blueprint = Blueprint('traces', __name__)
+
+# In-memory store for all ingested spans
 trace_store = []
 
 def parse_iso(ts: str) -> datetime.datetime:
     """
-    Parse an ISO-8601 timestamp, handling the 'Z' suffix as UTC.
+    Parse timestamps in ISO-8601 format, handling the 'Z' suffix.
     """
-    # If ends with 'Z', convert to '+00:00' for fromisoformat
     if ts.endswith('Z'):
         ts = ts[:-1] + '+00:00'
     return datetime.datetime.fromisoformat(ts)
 
 @trace_blueprint.route('/api/traces', methods=['POST', 'GET'])
 def handle_traces():
+    global trace_store  # make sure we refer to the module-level variable
     if request.method == 'POST':
         spans = request.json.get('traces', [])
         for span in spans:
-            # Normalize and store
+            # Normalize the incoming timestamp
+            parsed = parse_iso(span['timestamp'])
+            span['timestamp'] = parsed.isoformat()
+            # Tag with ingestion time
             span['ingested_at'] = datetime.datetime.utcnow().isoformat() + 'Z'
-            # Ensure timestamp is parseable
-            span['timestamp'] = parse_iso(span['timestamp']).isoformat()
             trace_store.append(span)
         return jsonify({"status": "success", "count": len(spans)}), 200
-    else:
-        # On GET, return raw store
-        return jsonify(trace_store), 200
+
+    # GET: return everything we’ve stored
+    return jsonify(trace_store), 200
 
 def correlate_traces_with_alerts(alerts):
+    """
+    For each alert, attach any traces from trace_store
+    within ±5 minutes for the same service.
+    """
     correlated = []
     for alert in alerts:
-        # Normalize alert timestamp, too
         alert_time = parse_iso(alert['timestamp'])
-        matched = []
-        for trace in trace_store:
-            if trace.get('service') == alert.get('service'):
-                trace_time = parse_iso(trace['timestamp'])
-                # within ±5 minutes?
-                if abs((trace_time - alert_time).total_seconds()) < 300:
-                    matched.append(trace)
+        matched = [
+            t for t in trace_store
+            if t.get('service') == alert.get('ci') and
+               abs((parse_iso(t['timestamp']) - alert_time).total_seconds()) < 300
+        ]
         if matched:
             alert['traces'] = matched
         correlated.append(alert)
