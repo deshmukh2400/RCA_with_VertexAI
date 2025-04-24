@@ -9,11 +9,11 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 app.register_blueprint(trace_blueprint)
 
 # Load default/mock data
-with open("backend/data/alerts.json") as f:
+with open("data/alerts.json") as f:
     default_alerts = json.load(f)
-with open("backend/data/changes.json") as f:
+with open("data/changes.json") as f:
     default_changes = json.load(f)
-with open("backend/data/cmdb.json") as f:
+with open("data/cmdb.json") as f:
     default_cmdb = json.load(f)
 
 # Instantiate the LLM engine (Gemini-based RCA)
