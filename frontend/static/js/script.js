@@ -39,6 +39,31 @@ function renderTree(cmdb, impactedSet) {
       .attr("height", height + 20)
     .append("g")
       .attr("transform", "translate(50,10)");
+      
+  // Draw nodes with dynamic fill and hover
+  const node = svg.selectAll('circle')
+    .data(hierarchy.descendants())
+    .join('circle')
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('r', 8)
+      .attr('fill', d => impactedSet.has(d.data.name) ? '#e74c3c' : '#69b3a2')
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1)
+    .on('mouseover', function(event, d) {
+      d3.select(this)
+        .transition().duration(100)
+        .attr('r', 12);
+      showTooltip(event.pageX, event.pageY, d.data.name);
+    })
+    .on('mouseout', function(event, d) {
+      d3.select(this)
+        .transition().duration(100)
+        .attr('r', 8);
+      hideTooltip();
+    });
+
+
 
   // Draw links
   svg.selectAll('line')
