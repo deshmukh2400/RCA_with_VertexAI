@@ -1,63 +1,54 @@
 [
   {
-    "trace_id": "trace-1001",
-    "span_id": "span-1",
+    "trace_id": "trace-5001",
+    "span_id": "s1",
     "parent_span_id": null,
-    "timestamp": "2024-04-17T10:00:01Z",
-    "service": "web-frontend",
-    "operation": "GET /products",
-    "duration_ms": 80,
+    "timestamp": "2025-04-20T09:15:05Z",
+    "service": "vm01",
+    "operation": "healthCheck",
+    "duration_ms": 30,
     "status": "success"
   },
   {
-    "trace_id": "trace-1001",
-    "span_id": "span-2",
-    "parent_span_id": "span-1",
-    "timestamp": "2024-04-17T10:00:02Z",
-    "service": "product-service",
-    "operation": "listProducts",
-    "duration_ms": 110,
-    "status": "success"
+    "trace_id": "trace-5001",
+    "span_id": "s2",
+    "parent_span_id": "s1",
+    "timestamp": "2025-04-20T09:15:06Z",
+    "service": "app01",
+    "operation": "processRequest",
+    "duration_ms": 5100,
+    "status": "timeout"
   },
   {
-    "trace_id": "trace-1002",
-    "span_id": "span-1",
+    "trace_id": "trace-5002",
+    "span_id": "t1",
     "parent_span_id": null,
-    "timestamp": "2024-04-17T10:00:05Z",
-    "service": "web-frontend",
-    "operation": "POST /order",
+    "timestamp": "2025-04-20T09:17:10Z",
+    "service": "app02",
+    "operation": "startTransaction",
     "duration_ms": 200,
-    "status": "success"
-  },
-  {
-    "trace_id": "trace-1002",
-    "span_id": "span-2",
-    "parent_span_id": "span-1",
-    "timestamp": "2024-04-17T10:00:06Z",
-    "service": "order-service",
-    "operation": "createOrder",
-    "duration_ms": 150,
-    "status": "success"
-  },
-  {
-    "trace_id": "trace-1002",
-    "span_id": "span-3",
-    "parent_span_id": "span-2",
-    "timestamp": "2024-04-17T10:00:06Z",
-    "service": "payment-service",
-    "operation": "chargeCard",
-    "duration_ms": 300,
     "status": "error",
-    "error": "Payment gateway timeout"
+    "error": "NullPointerException"
   },
   {
-    "trace_id": "trace-1003",
-    "span_id": "span-1",
-    "parent_span_id": null,
-    "timestamp": "2024-04-17T10:00:08Z",
-    "service": "monitoring-agent",
-    "operation": "check DB",
-    "duration_ms": 50,
+    "trace_id": "trace-5002",
+    "span_id": "t2",
+    "parent_span_id": "t1",
+    "timestamp": "2025-04-20T09:17:12Z",
+    "service": "db01",
+    "operation": "SELECT * FROM users",
+    "duration_ms": 450,
     "status": "success"
+  },
+  {
+    "trace_id": "trace-5003",
+    "span_id": "x1",
+    "parent_span_id": null,
+    "timestamp": "2025-04-20T09:19:05Z",
+    "service": "web01",
+    "operation": "GET /checkout",
+    "duration_ms": 120,
+    "status": "error",
+    "error": "502 Bad Gateway"
   }
 ]
