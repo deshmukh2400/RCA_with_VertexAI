@@ -1,52 +1,152 @@
 [
   {
-    "trace_id": "trace-xyz",
-    "span_id": "a1",
+    "trace_id": "trace-001",
+    "span_id": "1",
     "parent_span_id": null,
-    "timestamp": "2025-04-24T09:00:00Z",
     "service": "web01",
-    "operation": "GET /dashboard",
-    "duration_ms": 200,
+    "operation": "handle_request",
+    "timestamp": "2025-04-24T08:00:00Z",
+    "duration_ms": 120,
     "status": "ok"
   },
   {
-    "trace_id": "trace-xyz",
-    "span_id": "a2",
-    "parent_span_id": "a1",
-    "timestamp": "2025-04-24T09:00:01Z",
+    "trace_id": "trace-001",
+    "span_id": "2",
+    "parent_span_id": "1",
+    "service": "app01",
+    "operation": "process_login",
+    "timestamp": "2025-04-24T08:00:01Z",
+    "duration_ms": 95,
+    "status": "ok"
+  },
+  {
+    "trace_id": "trace-001",
+    "span_id": "3",
+    "parent_span_id": "2",
+    "service": "db01",
+    "operation": "query_users",
+    "timestamp": "2025-04-24T08:00:02Z",
+    "duration_ms": 45,
+    "status": "ok"
+  },
+  {
+    "trace_id": "trace-002",
+    "span_id": "4",
+    "parent_span_id": null,
+    "service": "web01",
+    "operation": "checkout",
+    "timestamp": "2025-04-24T08:10:00Z",
+    "duration_ms": 130,
+    "status": "ok"
+  },
+  {
+    "trace_id": "trace-002",
+    "span_id": "5",
+    "parent_span_id": "4",
+    "service": "app02",
+    "operation": "calculate_total",
+    "timestamp": "2025-04-24T08:10:01Z",
+    "duration_ms": 110,
+    "status": "error"
+  },
+  {
+    "trace_id": "trace-002",
+    "span_id": "6",
+    "parent_span_id": "5",
+    "service": "payment01",
+    "operation": "charge_card",
+    "timestamp": "2025-04-24T08:10:02Z",
+    "duration_ms": 70,
+    "status": "ok"
+  },
+  {
+    "trace_id": "trace-002",
+    "span_id": "7",
+    "parent_span_id": "5",
+    "service": "fraud01",
+    "operation": "verify_transaction",
+    "timestamp": "2025-04-24T08:10:02Z",
+    "duration_ms": 60,
+    "status": "ok"
+  },
+  {
+    "trace_id": "trace-003",
+    "span_id": "8",
+    "parent_span_id": null,
+    "service": "web02",
+    "operation": "search",
+    "timestamp": "2025-04-24T08:20:00Z",
+    "duration_ms": 80,
+    "status": "ok"
+  },
+  {
+    "trace_id": "trace-003",
+    "span_id": "9",
+    "parent_span_id": "8",
+    "service": "search01",
+    "operation": "query_index",
+    "timestamp": "2025-04-24T08:20:01Z",
+    "duration_ms": 50,
+    "status": "ok"
+  },
+  {
+    "trace_id": "trace-003",
+    "span_id": "10",
+    "parent_span_id": "9",
+    "service": "cache01",
+    "operation": "get_hit",
+    "timestamp": "2025-04-24T08:20:01Z",
+    "duration_ms": 20,
+    "status": "ok"
+  },
+  {
+    "trace_id": "trace-004",
+    "span_id": "11",
+    "parent_span_id": null,
+    "service": "web03",
+    "operation": "upload_file",
+    "timestamp": "2025-04-24T08:30:00Z",
+    "duration_ms": 160,
+    "status": "ok"
+  },
+  {
+    "trace_id": "trace-004",
+    "span_id": "12",
+    "parent_span_id": "11",
+    "service": "app03",
+    "operation": "store_metadata",
+    "timestamp": "2025-04-24T08:30:01Z",
+    "duration_ms": 100,
+    "status": "ok"
+  },
+  {
+    "trace_id": "trace-004",
+    "span_id": "13",
+    "parent_span_id": "12",
+    "service": "db02",
+    "operation": "insert_file",
+    "timestamp": "2025-04-24T08:30:02Z",
+    "duration_ms": 60,
+    "status": "ok"
+  },
+  {
+    "trace_id": "trace-005",
+    "span_id": "14",
+    "parent_span_id": null,
     "service": "api01",
-    "operation": "fetchData",
-    "duration_ms": 350,
+    "operation": "get_user_profile",
+    "timestamp": "2025-04-24T08:40:00Z",
+    "duration_ms": 90,
     "status": "ok"
   },
   {
-    "trace_id": "trace-xyz",
-    "span_id": "a3",
-    "parent_span_id": "a2",
-    "timestamp": "2025-04-24T09:00:02Z",
-    "service": "svc01",
-    "operation": "readFromDB",
-    "duration_ms": 400,
-    "status": "error"
-  },
-  {
-    "trace_id": "trace-xyz",
-    "span_id": "a4",
-    "parent_span_id": "a3",
-    "timestamp": "2025-04-24T09:00:03Z",
-    "service": "mq01",
-    "operation": "enqueueLog",
-    "duration_ms": 150,
-    "status": "error"
-  },
-  {
-    "trace_id": "trace-xyz",
-    "span_id": "a5",
-    "parent_span_id": "a4",
-    "timestamp": "2025-04-24T09:00:04Z",
-    "service": "vm04",
-    "operation": "DiskIO",
-    "duration_ms": 800,
-    "status": "error"
+    "trace_id": "trace-005",
+    "span_id": "15",
+    "parent_span_id": "14",
+    "service": "db01",
+    "operation": "fetch_user",
+    "timestamp": "2025-04-24T08:40:01Z",
+    "duration_ms": 60,
+    "status": "ok"
   }
 ]
