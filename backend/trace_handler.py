@@ -2,16 +2,27 @@
 
 from flask import Blueprint, request, jsonify
 import datetime
+import json
+import os
 
 trace_blueprint = Blueprint('traces', __name__)
 
-# ← this must be at top level, not inside any function
 trace_store = []
 
 def parse_iso(ts: str) -> datetime.datetime:
     if ts.endswith('Z'):
         ts = ts[:-1] + '+00:00'
     return datetime.datetime.fromisoformat(ts)
+
+# Load mock data from file at startup
+def load_mock_traces():
+    global trace_store
+    path = os.path.join(os.path.dirname(__file__), 'data', 'traces.json')
+    if os.path.exists(path):
+        with open(path) as f:
+            trace_store.extend(json.load(f))
+
+load_mock_traces()  # this ensures traces are available on GET
 
 @trace_blueprint.route('/api/traces', methods=['POST', 'GET'])
 def handle_traces():
