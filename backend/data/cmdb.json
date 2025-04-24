@@ -1,5 +1,22 @@
 {
-  "web01": { "depends_on": ["app01"] },
-  "app01": { "depends_on": ["db01"] },
-  "db01":  { "depends_on": [] }
+  "web01": {
+    "type": "Web Server",
+    "depends_on": ["app01", "app02"]
+  },
+  "app01": {
+    "type": "App Server",
+    "depends_on": ["vm01"]
+  },
+  "app02": {
+    "type": "App Server",
+    "depends_on": ["vm01"]
+  },
+  "vm01": {
+    "type": "Virtual Machine",
+    "depends_on": ["db01"]
+  },
+  "db01": {
+    "type": "Database Server",
+    "depends_on": []
+  }
 }
