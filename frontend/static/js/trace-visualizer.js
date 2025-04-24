@@ -138,7 +138,7 @@ function renderTraceGraph(traces) {
   });
   // Auto-center and scale the trace graph
   const bbox = svg.node().getBBox();
-  const svgBase = d3.select(".trace-graph svg"); // outer SVG element
+  //const svgBase = d3.select(".trace-graph svg"); // outer SVG element
   const fullWidth = +svgBase.attr("width");
   const fullHeight = +svgBase.attr("height");
   
