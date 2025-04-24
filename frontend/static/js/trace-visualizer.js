@@ -103,7 +103,16 @@ function renderTraceTimeline(traces) {
 }
 
 // Wire up the button
-document.getElementById('refresh-traces').addEventListener('click', loadTraces);
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('refresh-traces');
+  if (btn) {
+    btn.addEventListener('click', loadTraces);
+  } else {
+    console.warn("Refresh button not found");
+  }
+  // Kick off an initial load
+  loadTraces();
+});
 
 // Initial fetch of traces and RCA/alerts on page load
 window.addEventListener('DOMContentLoaded', () => {
