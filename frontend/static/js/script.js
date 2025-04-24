@@ -13,11 +13,8 @@ async function loadCMDB() {
   }
 }
 
-function renderTree(cmdb) {
-  // clear any existing SVG
-  d3.select("#tree-container").html("");
-
-  // build the same simple tree from 'web01'
+function renderTree(cmdb, impactedSet) {
+  // Build hierarchical data as before...
   const root = { name: 'web01', children: [] };
   (function build(node, id) {
     const deps = cmdb[id]?.depends_on || [];
@@ -29,45 +26,50 @@ function renderTree(cmdb) {
     });
   })(root, 'web01');
 
-  const width = 400, height = 250;
-  const treeLayout = d3.tree().size([width, height]);
+  // D3 tree layout
+  const width = 500, height = 300;
+  const treeLayout = d3.tree().size([height, width - 100]);
   const hierarchy = d3.hierarchy(root);
   treeLayout(hierarchy);
 
-  const svg = d3.select("#tree-container")
+  // Clear and create new SVG
+  const svg = d3.select("#tree-container").html("")
     .append("svg")
-    .attr("width", width + 100)
-    .attr("height", height + 40)
+      .attr("width", width)
+      .attr("height", height + 20)
     .append("g")
-    .attr("transform", "translate(50,20)");
+      .attr("transform", "translate(50,10)");
 
-  // links
+  // Draw links
   svg.selectAll('line')
     .data(hierarchy.links())
     .join('line')
-    .attr('x1', d => d.source.x)
-    .attr('y1', d => d.source.y)
-    .attr('x2', d => d.target.x)
-    .attr('y2', d => d.target.y)
-    .attr('stroke', '#999');
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y)
+      .attr('stroke', '#999');
 
-  // nodes
+  // Draw nodes with dynamic fill
   svg.selectAll('circle')
     .data(hierarchy.descendants())
     .join('circle')
-    .attr('cx', d => d.x)
-    .attr('cy', d => d.y)
-    .attr('r', 6)
-    .attr('fill', '#69b3a2');
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('r', 8)
+      .attr('fill', d => impactedSet.has(d.data.name) ? '#e74c3c' /* red */ : '#69b3a2' /* green */)
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1);
 
-  // labels
+  // Draw labels
   svg.selectAll('text')
     .data(hierarchy.descendants())
     .join('text')
-    .attr('x', d => d.x)
-    .attr('y', d => d.y + 15)
-    .attr('text-anchor', 'middle')
-    .text(d => d.data.name);
+      .attr('x', d => d.x)
+      .attr('y', d => d.y + 18)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '12px')
+      .text(d => d.data.name);
 }
 
 // 2) Load RCA & alerts, update summary and timeline
@@ -95,6 +97,17 @@ async function loadRCA() {
   }
 }
 
+async function init() {
+  const cmdbData = await loadCMDB();
+  const rcaData  = await loadRCA();
+
+  // 1) Extract the set of impacted CIs from the timeline
+  const impactedSet = new Set(rcaData.timeline.map(alert => alert.ci));
+
+  renderTree(cmdbData, impactedSet);
+  document.getElementById("rca-output").innerText = rcaData.root_cause;
+  renderAlerts(rcaData.timeline);
+}
 // 3) Wire up initial load
 window.addEventListener("DOMContentLoaded", () => {
   loadCMDB();
