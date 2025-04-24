@@ -1,5 +1,32 @@
 [
-  { "ci": "db01",  "timestamp": "2025-04-16T08:25:00", "message": "Disk space full" },
-  { "ci": "app01","timestamp": "2025-04-16T08:30:00", "message": "App not responding" },
-  { "ci": "web01","timestamp": "2025-04-16T08:35:00", "message": "Web timeout" }
+  {
+    "ci": "vm01",
+    "timestamp": "2025-04-20T09:15:00Z",
+    "message": "CPU usage at 98%",
+    "severity": "critical"
+  },
+  {
+    "ci": "app01",
+    "timestamp": "2025-04-20T09:17:00Z",
+    "message": "Application response time > 5s",
+    "severity": "warning"
+  },
+  {
+    "ci": "app02",
+    "timestamp": "2025-04-20T09:18:30Z",
+    "message": "Application crashed with exit code 1",
+    "severity": "critical"
+  },
+  {
+    "ci": "web01",
+    "timestamp": "2025-04-20T09:19:00Z",
+    "message": "HTTP 502 Bad Gateway",
+    "severity": "error"
+  },
+  {
+    "ci": "db01",
+    "timestamp": "2025-04-20T09:10:00Z",
+    "message": "Disk latency high",
+    "severity": "warning"
+  }
 ]
