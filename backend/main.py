@@ -27,6 +27,9 @@ def index():
     return render_template("index.html")
 
 @app.route("/api/rca", methods=["GET", "POST"])
+def handle_traces():
+    if request.method == 'GET':
+        return jsonify(trace_store), 200
 def api_rca():
     # Choose between default data (GET) or client-supplied (POST)
     if request.method == "POST":
