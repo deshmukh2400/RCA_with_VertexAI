@@ -1,4 +1,23 @@
 [
-  { "ci": "web01", "timestamp": "2025-04-16T07:00:00", "change": "Deployed new code" },
-  { "ci": "db01",  "timestamp": "2025-04-16T06:45:00", "change": "Patched OS" }
+  {
+    "ci": "app02",
+    "change_id": "CH2001",
+    "timestamp": "2025-04-20T08:50:00Z",
+    "description": "Deployed v2.3.0 of payment microservice",
+    "status": "completed"
+  },
+  {
+    "ci": "vm01",
+    "change_id": "CH2002",
+    "timestamp": "2025-04-20T09:00:00Z",
+    "description": "Increased CPU allocation from 2 → 4 cores",
+    "status": "completed"
+  },
+  {
+    "ci": "db01",
+    "change_id": "CH2003",
+    "timestamp": "2025-04-20T08:30:00Z",
+    "description": "Patched database OS kernel",
+    "status": "completed"
+  }
 ]
