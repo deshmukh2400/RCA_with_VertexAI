@@ -150,3 +150,13 @@ main {
 }
 .legend-color.impacted { background-color: #e74c3c; }
 .legend-color.healthy  { background-color: #69b3a2; }
+
+/* CMDB Error Message */
+.error-message {
+  padding: 1rem;
+  background: #fdecea;
+  color: #b71c1c;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
