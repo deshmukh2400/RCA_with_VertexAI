@@ -21,7 +21,6 @@ function renderAlerts(timeline) {
   });
 }
 
-
 // Draw the dependency tree, coloring impacted CIs red
 function renderTree(cmdb, impactedSet) {
   // Build hierarchical data (starting from 'web01' or adjust as needed)
@@ -36,28 +35,19 @@ function renderTree(cmdb, impactedSet) {
     });
   })(root, 'web01');
 
-  const nodeCount = hierarchy.descendants().length;
-  const width = Math.max(600, nodeCount * 30);
-  const height = Math.max(400, nodeCount * 20);
+  const width = 500, height = 300;
   const treeLayout = d3.tree().size([height, width - 100]);
   const hierarchy = d3.hierarchy(root);
   treeLayout(hierarchy);
 
   // Clear old tree
-  
   const container = d3.select("#tree-container").html("");
-  const svgBase = container.append("svg")
-    .attr("width", width + 200)
-    .attr("height", height + 200)
-    .call(d3.zoom().on("zoom", (event) => {
-      svg.attr("transform", event.transform);
-    }));
+  const svg = container.append("svg")
+      .attr("width", width + 100)
+      .attr("height", height + 40)
+    .append("g")
+      .attr("transform", "translate(50,20)");
 
-  const svg = svgBase.append("g")
-    .attr("transform", "translate(50,50)");
-    
-  
-  
   // Links
   svg.selectAll("line")
     .data(hierarchy.links())
@@ -96,23 +86,6 @@ function renderTree(cmdb, impactedSet) {
       .attr("text-anchor", "middle")
       .style("font-size", "12px")
       .text(d => d.data.name);
-      
-  // Auto-center and scale to fit
-  const bounds = svg.node().getBBox();
-  const fullWidth = svgBase.attr("width");
-  const fullHeight = svgBase.attr("height");
-  
-  const scale = Math.min(
-    fullWidth / (bounds.width + 100),
-    fullHeight / (bounds.height + 100)
-  );
-  
-  const translateX = (fullWidth - bounds.width * scale) / 2 - bounds.x * scale;
-  const translateY = (fullHeight - bounds.height * scale) / 2 - bounds.y * scale;
-  
-  svg.transition()
-    .duration(500)
-    .attr("transform", `translate(${translateX}, ${translateY}) scale(${scale})`);
 }
 
 // Tooltip setup
