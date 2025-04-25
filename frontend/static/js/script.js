@@ -19,14 +19,13 @@ function renderAlerts(timeline) {
   });
 }
 
-// Render dependency tree with arrows, tooltip, and RAG coloring
+// Render dependency tree with arrows, tooltip, and CMDB-based RAG coloring
 function renderTree(cmdb, impactedSet) {
-  // Build hierarchical structure starting from root node
   const root = { name: 'web01', children: [] };
   const visited = new Set();
 
   (function build(node, id) {
-    if (visited.has(id)) return; // prevent cycles
+    if (visited.has(id)) return;
     visited.add(id);
 
     const deps = cmdb[id]?.depends_on || [];
@@ -38,7 +37,6 @@ function renderTree(cmdb, impactedSet) {
     });
   })(root, 'web01');
 
-  // Calculate dynamic tree size
   const maxDepth = (function getMaxDepth(node) {
     if (!node.children || node.children.length === 0) return 1;
     return 1 + Math.max(...node.children.map(getMaxDepth));
@@ -51,7 +49,6 @@ function renderTree(cmdb, impactedSet) {
   const hierarchy = d3.hierarchy(root);
   treeLayout(hierarchy);
 
-  // Clear old content and setup SVG
   const container = d3.select("#tree-container").html("");
   const svg = container.append("svg")
     .attr("width", width + 200)
@@ -72,7 +69,6 @@ function renderTree(cmdb, impactedSet) {
     .attr("d", "M0,-5L10,0L0,5")
     .attr("fill", "#999");
 
-  // Draw links with arrow markers
   svg.selectAll("line")
     .data(hierarchy.links())
     .join("line")
@@ -84,14 +80,17 @@ function renderTree(cmdb, impactedSet) {
     .attr("y2", d => d.target.x)
     .attr("marker-end", "url(#arrowhead)");
 
-  // Define color based on impact status (RAG)
   const statusColor = (name) => {
-    if (impactedSet.has(name)) return "#e74c3c";  // Red
-    if (name.includes("db") || name.includes("cache")) return "#f1c40f";  // Amber-like
-    return "#2ecc71"; // Green
+    const ci = cmdb[name];
+    if (!ci) return "#bdc3c7"; // default gray
+    switch (ci.rag) {
+      case "red": return "#e74c3c";
+      case "amber": return "#f1c40f";
+      case "green": return "#2ecc71";
+      default: return "#bdc3c7";
+    }
   };
 
-  // Draw nodes
   const nodes = svg.selectAll("circle")
     .data(hierarchy.descendants())
     .join("circle")
@@ -103,14 +102,13 @@ function renderTree(cmdb, impactedSet) {
     .attr("stroke-width", 1.5)
     .on("mouseover", (event, d) => {
       d3.select(event.currentTarget).transition().duration(100).attr("r", 14);
-      showTooltip(event.pageX, event.pageY, d.data.name);
+      showTooltip(event.pageX, event.pageY, d.data.name, cmdb[d.data.name]?.rag);
     })
     .on("mouseout", (event, d) => {
       d3.select(event.currentTarget).transition().duration(100).attr("r", 10);
       hideTooltip();
     });
 
-  // Add labels
   svg.selectAll("text")
     .data(hierarchy.descendants())
     .join("text")
@@ -133,11 +131,11 @@ const tooltip = d3.select("body")
   .style("pointer-events", "none")
   .style("opacity", 0);
 
-function showTooltip(x, y, text) {
+function showTooltip(x, y, name, rag = "unknown") {
   tooltip
     .style("left", `${x + 10}px`)
     .style("top", `${y + 10}px`)
-    .html(`<strong>${text}</strong>`)
+    .html(`<strong>${name}</strong><br>Status: ${rag}`)
     .transition().duration(100).style("opacity", 1);
 }
 
@@ -145,18 +143,14 @@ function hideTooltip() {
   tooltip.transition().duration(100).style("opacity", 0);
 }
 
-// Main app initialization
+// Initialization logic
 async function init() {
   try {
-    // Load RCA and alerts
     const { root_cause, timeline } = await fetchJSON("/api/rca");
     document.getElementById("rca-output").innerText = root_cause;
     renderAlerts(timeline);
 
-    // Build impacted CI set
     const impactedSet = new Set(timeline.map(a => a.ci));
-
-    // Load CMDB and draw the tree
     const cmdb = await fetchJSON("/api/cmdb");
     renderTree(cmdb, impactedSet);
 
