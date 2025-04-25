@@ -1,0 +1,5 @@
+flask
+vertexai
+networkx
+openai
+gunicorn
