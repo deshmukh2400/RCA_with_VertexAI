@@ -1,2 +1,10 @@
 #RCA using GenAI
 
+# How to run 
+
+1. Set environments
+cd /opt/hackathon2025
+run . ./setEnv.sh
+
+2. Start application
+nohup flask run --host=0.0.0.0 --port=5000 &

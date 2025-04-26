@@ -73,3 +73,25 @@ def api_cmdb():
 if __name__ == "__main__":
     # Listen on all interfaces (0.0.0.0) so your VM/Docker can expose it
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+
+@app.route("/api/incident", methods=["POST"])
+def receive_incident():
+    try:
+        data = request.get_json()
+        incident_number = data.get("incident_number")
+
+        if not incident_number:
+            return jsonify({"error": "Missing 'incident_number' field"}), 400
+
+        # Log or process the incident number (store, trigger RCA, etc.)
+        print(f"Received Incident: {incident_number}")
+
+        # Optional: trigger background RCA or acknowledge receipt
+        return jsonify({
+            "message": f"Incident {incident_number} received successfully"
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
