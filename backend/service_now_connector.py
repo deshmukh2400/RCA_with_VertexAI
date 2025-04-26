@@ -2,6 +2,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json
 
+
 class ServiceNowConnection:
     instance = "https://dev265570.service-now.com"
     username = "admin"
@@ -13,96 +14,91 @@ class ServiceNowConnection:
     }
 
     def get_incident_data(self, incident_number):
+        # Step 1: Fetch Incident
         query_url = f"{self.instance}/api/now/table/incident"
         params = {"sysparm_query": f"number={incident_number}", "sysparm_limit": 1}
         response = requests.get(query_url, auth=(self.username, self.password), headers=self.headers, params=params)
-        if response.status_code != 200:
-            raise Exception("Failed to fetch incident")
         data = response.json()
 
-        if not data["result"]:
-            return {"error": "Incident not found"}
+        if response.status_code != 200 or not data["result"]:
+            raise Exception("Incident not found or API error")
 
-        incident = data["result"][0]
-        incident_sys_id = incident["sys_id"]
-        ci_sys_id = incident.get("cmdb_ci", {}).get("value")
+        incident_sys_id = data["result"][0]["sys_id"]
+        incident_data = self._get_record_by_sys_id("incident", incident_sys_id)
+        ci_sys_id = incident_data.get("cmdb_ci", {}).get("value")
 
         if not ci_sys_id:
-            return {"incident_details": incident, "affected_cis": [], "outage_details": []}
+            return {
+                "incident_details": incident_data,
+                "affected_cis": [],
+                "outage_details": [],
+                "cmdb": {}
+            }
 
-        related_cis = self.get_related_cis(ci_sys_id, set())
-        related_cis.add(ci_sys_id)
+        # Step 2: Traverse Related CIs
+        complete_ci_list = []
+        self._collect_related_cis(ci_sys_id, complete_ci_list)
+        complete_ci_list.append(ci_sys_id)
+        unique_cis = list(set(complete_ci_list))
 
-        outages = self.get_outages(related_cis)
+        # Step 3: Correlate Outages
+        outages = self._get_outages_for_cis(unique_cis)
+
+        # Step 4: Build Dependency Map
+        cmdb_map = self._build_dependency_map()
 
         return {
-            "incident_details": incident,
-            "affected_cis": list(related_cis),
-            "outage_details": outages
+            "incident_details": incident_data,
+            "affected_cis": unique_cis,
+            "outage_details": outages,
+            "cmdb": cmdb_map
         }
 
-    def get_related_cis(self, ci_sys_id, visited):
-        if ci_sys_id in visited:
-            return visited
-        visited.add(ci_sys_id)
+    def _get_record_by_sys_id(self, table, sys_id):
+        url = f"{self.instance}/api/now/table/{table}/{sys_id}"
+        response = requests.get(url, auth=(self.username, self.password), headers=self.headers)
+        return response.json().get('result', {})
 
-        url = f"{self.instance}/api/now/table/cmdb_rel_ci"
-        params = {
-            "sysparm_query": f"parent={ci_sys_id}^ORchild={ci_sys_id}",
-            "sysparm_fields": "parent,child,parent.sys_id,child.sys_id",
-            "sysparm_limit": 100
-        }
-        response = requests.get(url, auth=(self.username, self.password), headers=self.headers, params=params)
-        if response.status_code != 200:
-            return visited
+    def _collect_related_cis(self, ci_sys_id, collected):
+        url = f"{self.instance}/api/now/table/cmdb_rel_ci?sysparm_query=parent={ci_sys_id}"
+        resp = requests.get(url, auth=(self.username, self.password), headers=self.headers)
+        rels = resp.json().get('result', [])
+        children = [rel['child']['value'] for rel in rels if rel.get('child')]
+        for child_id in children:
+            if child_id not in collected:
+                collected.append(child_id)
+                self._collect_related_cis(child_id, collected)
 
-        for rel in response.json()["result"]:
-            parent_id = rel.get("parent", {}).get("value")
-            child_id = rel.get("child", {}).get("value")
-            if parent_id and parent_id != ci_sys_id:
-                self.get_related_cis(parent_id, visited)
-            if child_id and child_id != ci_sys_id:
-                self.get_related_cis(child_id, visited)
-        return visited
-
-    def get_outages(self, ci_ids):
+    def _get_outages_for_cis(self, ci_ids):
         if not ci_ids:
             return []
-
-        id_list = ",".join(ci_ids)
+        ci_query = ",".join(ci_ids)
+        params = {
+            'sysparm_query': f"ciIN{ci_query}^type=Planned",
+            'sysparm_limit': '10000'
+        }
         url = f"{self.instance}/api/now/table/cmdb_ci_outage"
-        params = {
-            "sysparm_query": f"ciIN{id_list}^type=Planned",
-            "sysparm_limit": "100"
-        }
         response = requests.get(url, auth=(self.username, self.password), headers=self.headers, params=params)
-        if response.status_code != 200:
-            return []
+        outages = response.json().get('result', [])
+        return outages
 
-        return response.json().get("result", [])
-
-    def fetch_ci_relationships(self):
+    def _build_dependency_map(self):
         url = f"{self.instance}/api/now/table/cmdb_rel_ci"
-        params = {
-            "sysparm_fields": "parent.name,child.name",
-            "sysparm_limit": 1000
-        }
+        params = {'sysparm_fields': 'parent.name,parent.sys_id,child.name,child.sys_id'}
         response = requests.get(url, auth=(self.username, self.password), headers=self.headers, params=params)
-        if response.status_code != 200:
-            raise Exception("Failed to fetch relationships")
+        rels = response.json().get('result', [])
 
-        data = response.json().get("result", [])
         cmdb = {}
-
-        for rel in data:
+        for rel in rels:
             parent = rel.get("parent.name")
             child = rel.get("child.name")
             if not parent or not child:
                 continue
 
-            cmdb.setdefault(child, {"depends_on": []})
-            cmdb[child]["depends_on"].append(parent)
+            cmdb.setdefault(parent, {"depends_on": [], "used_by": []})
+            cmdb.setdefault(child, {"depends_on": [], "used_by": []})
 
-            cmdb.setdefault(parent, {"depends_on": []})  # Ensure parent appears too
+            cmdb[parent]["depends_on"].append(child)
+            cmdb[child]["used_by"].append(parent)
 
         return cmdb
