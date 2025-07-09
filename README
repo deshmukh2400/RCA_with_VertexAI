@@ -1,4 +1,26 @@
 #RCA using GenAI
+# Set Python venv
+
+1. Navigate to your project dir, and run below command:
+
+ python3 -m venv .venv
+
+2. Activate Virtual environment, run:
+ 
+ source .venv/bin/activate
+
+3. To confirm the virtual environment is activated, run:
+
+ which python
+
+4. To deactivate virtual environment, run:
+
+ deactivate
+
+#Install dependencies:
+
+pip install -r requirements.txt
+
 
 # How to run 
 
